@@ -272,6 +272,7 @@ id_ed25519.pub
 
 # node_modules
 node_modules/
+/dist/
 
 # weasyPrint
 **/LOCAL_APPDATA_FONTCONFIG_CACHE/**
