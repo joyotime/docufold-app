@@ -7,7 +7,7 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
-    target: "es2022",
+    target: ["es2018", "safari14"],
     chunkSizeWarningLimit: 1400,
   },
   worker: {

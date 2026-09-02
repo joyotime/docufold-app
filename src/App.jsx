@@ -635,12 +635,13 @@ function Workspace({ tool }) {
   const addFiles = (newFiles) => {
     clearResults();
     setError("");
-    setFiles((current) => (multiple ? [...current, ...newFiles] : newFiles));
+    const fileList = Array.from(newFiles || []);
+    setFiles((current) => (multiple ? current.concat(fileList) : fileList));
   };
 
   const moveFile = (index, offset) => {
     setFiles((current) => {
-      const next = [...current];
+      const next = current.slice();
       const [file] = next.splice(index, 1);
       next.splice(index + offset, 0, file);
       return next;

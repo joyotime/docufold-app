@@ -56,7 +56,11 @@ function parseRangeGroups(value, pageCount, defaultToEveryPage = false) {
 }
 
 function uniquePages(groups) {
-  return [...new Set(groups.flat())];
+  const flattened = [];
+  groups.forEach((group) => {
+    Array.from(group || []).forEach((pageIndex) => flattened.push(pageIndex));
+  });
+  return Array.from(new Set(flattened));
 }
 
 function output(name, bytes) {
@@ -64,12 +68,14 @@ function output(name, bytes) {
 }
 
 async function mergePdfs({ files }) {
-  if (files.length < 2) {
+  const fileList = Array.from(files || []);
+  if (fileList.length < 2) {
     throw new Error("请至少选择两个 PDF 文件进行合并。");
   }
 
   const merged = await PDFDocument.create();
-  for (const file of files) {
+  for (let fileIndex = 0; fileIndex < fileList.length; fileIndex += 1) {
+    const file = fileList[fileIndex];
     const source = await PDFDocument.load(file.data);
     const pages = await merged.copyPages(source, source.getPageIndices());
     pages.forEach((page) => merged.addPage(page));
@@ -84,7 +90,8 @@ async function splitPdf({ file, ranges }) {
   const baseName = withoutExtension(file.name);
   const outputs = [];
 
-  for (const [index, pageIndices] of groups.entries()) {
+  for (let index = 0; index < groups.length; index += 1) {
+    const pageIndices = groups[index];
     const split = await PDFDocument.create();
     const pages = await split.copyPages(source, pageIndices);
     pages.forEach((page) => split.addPage(page));
@@ -228,11 +235,23 @@ function finiteNumber(value, label) {
 function drawTextMatchMasks(document, pageIndices, matches, padding) {
   const selectedPages = new Set(pageIndices);
   let maskCount = 0;
+  const matchList = Array.from(matches || []);
 
-  for (const match of matches) {
+  for (
+    let matchIndex = 0;
+    matchIndex < matchList.length;
+    matchIndex += 1
+  ) {
+    const match = matchList[matchIndex];
     if (!selectedPages.has(match.pageIndex)) continue;
     const page = document.getPage(match.pageIndex);
-    for (const rectangle of match.rectangles) {
+    const rectangles = Array.from(match.rectangles || []);
+    for (
+      let rectangleIndex = 0;
+      rectangleIndex < rectangles.length;
+      rectangleIndex += 1
+    ) {
+      const rectangle = rectangles[rectangleIndex];
       page.drawRectangle({
         x: finiteNumber(rectangle.x, "匹配区域 X") - padding,
         y: finiteNumber(rectangle.y, "匹配区域 Y") - padding,
@@ -294,7 +313,8 @@ function maskRectangleForPage(page, options) {
 }
 
 function drawRectangleMasks(document, pageIndices, options) {
-  for (const pageIndex of pageIndices) {
+  for (let index = 0; index < pageIndices.length; index += 1) {
+    const pageIndex = pageIndices[index];
     const page = document.getPage(pageIndex);
     page.drawRectangle({
       ...maskRectangleForPage(page, options),

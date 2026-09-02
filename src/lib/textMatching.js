@@ -1,10 +1,13 @@
 export function parsePageSelection(value, pageCount) {
-  if (!value.trim()) {
+  const normalizedValue = typeof value === "string" ? value : "";
+  if (!normalizedValue.trim()) {
     return Array.from({ length: pageCount }, (_, index) => index);
   }
 
   const selected = new Set();
-  for (const rawToken of value.split(",")) {
+  const tokens = normalizedValue.split(",");
+  for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex += 1) {
+    const rawToken = tokens[tokenIndex];
     const token = rawToken.trim();
     if (/^\d+$/.test(token)) {
       const page = Number(token);
@@ -35,26 +38,35 @@ export function parsePageSelection(value, pageCount) {
       selected.add(page - 1);
     }
   }
-  return [...selected];
+  return Array.from(selected);
 }
 
 function normalizeSearchText(value) {
-  return value.normalize("NFKC").toLocaleLowerCase();
+  const text = typeof value === "string" ? value : "";
+  return typeof text.normalize === "function"
+    ? text.normalize("NFKC").toLocaleLowerCase()
+    : text.toLocaleLowerCase();
 }
 
 export function matchingItemIndices(items, keyword) {
   let searchable = "";
   const owners = [];
 
-  items.forEach((item, itemIndex) => {
-    for (const character of normalizeSearchText(item.str)) {
+  Array.from(items || []).forEach((item, itemIndex) => {
+    const characters = Array.from(normalizeSearchText(item?.str));
+    for (
+      let characterIndex = 0;
+      characterIndex < characters.length;
+      characterIndex += 1
+    ) {
+      const character = characters[characterIndex];
       if (/\s/u.test(character)) continue;
       searchable += character;
       owners.push(itemIndex);
     }
   });
 
-  const needle = [...normalizeSearchText(keyword)]
+  const needle = Array.from(normalizeSearchText(keyword))
     .filter((character) => !/\s/u.test(character))
     .join("");
   const matchedItems = new Set();
@@ -67,18 +79,23 @@ export function matchingItemIndices(items, keyword) {
     }
     position = matchIndex + Math.max(needle.length, 1);
   }
-  return [...matchedItems];
+  return Array.from(matchedItems);
 }
 
 export function rectangleForTextItem(item) {
+  const transform = Array.from(item?.transform || []);
+  if (transform.length < 6) {
+    throw new Error("PDF 文本定位信息无效，无法生成擦除区域。");
+  }
   const fontHeight =
-    Math.hypot(item.transform[2], item.transform[3]) || item.height || 10;
+    Math.hypot(Number(transform[2]), Number(transform[3])) ||
+    Number(item.height) ||
+    10;
   return {
-    x: item.transform[4],
-    y: item.transform[5] - fontHeight * 0.24,
-    width: Math.max(item.width, 2),
+    x: Number(transform[4]),
+    y: Number(transform[5]) - fontHeight * 0.24,
+    width: Math.max(Number(item.width) || 0, 2),
     height: Math.max(fontHeight * 1.2, 2),
-    angle:
-      (Math.atan2(item.transform[1], item.transform[0]) * 180) / Math.PI,
+    angle: (Math.atan2(transform[1], transform[0]) * 180) / Math.PI,
   };
 }
