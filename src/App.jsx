@@ -424,6 +424,7 @@ function ToolOptions({ tool, options, setOptions }) {
           <div className="mode-toggle" role="group" aria-label="去水印方式">
             <button
               type="button"
+              disabled={options.removeTransparentOverlay}
               className={options.removalMode === "text" ? "active" : ""}
               onClick={() =>
                 setOptions((current) => ({
@@ -436,6 +437,7 @@ function ToolOptions({ tool, options, setOptions }) {
             </button>
             <button
               type="button"
+              disabled={options.removeTransparentOverlay}
               className={options.removalMode === "rectangle" ? "active" : ""}
               onClick={() =>
                 setOptions((current) => ({
@@ -444,13 +446,41 @@ function ToolOptions({ tool, options, setOptions }) {
                 }))
               }
             >
-              矩形遮盖
+              矩形遮罩
             </button>
           </div>
           <small>
-            文本模式由 PDF.js 定位可提取文字；扫描件或路径水印请使用矩形遮盖。
+            {options.removeTransparentOverlay
+              ? "开启后仅移除独立 Form XObject 或使用透明 GState 绘制的对象。"
+              : "文本模式由 PDF.js 定位可提取文字；扫描件或路径水印请使用矩形遮罩。"}
           </small>
         </div>
+
+        <label
+          className={
+            "overlay-toggle span-all" +
+            (options.removeTransparentOverlay ? " active" : "")
+          }
+        >
+          <input
+            type="checkbox"
+            checked={options.removeTransparentOverlay}
+            onChange={(event) =>
+              setOptions((current) => ({
+                ...current,
+                removeTransparentOverlay: event.target.checked,
+              }))
+            }
+          />
+          <span>
+            <strong>
+              Remove Transparent Overlay / 清除透明叠加图层
+            </strong>
+            <small>
+              适用于以独立 Form、透明 XObject 或 ExtGState 叠加的矢量水印。
+            </small>
+          </span>
+        </label>
 
         <Field label="页面范围" hint="留空表示全部页面。">
           <input
@@ -460,8 +490,9 @@ function ToolOptions({ tool, options, setOptions }) {
           />
         </Field>
 
-        {options.removalMode === "text" ? (
-          <>
+        {!options.removeTransparentOverlay &&
+          (options.removalMode === "text" ? (
+            <>
             <Field
               label="水印关键字"
               hint="忽略大小写与空白，并支持被拆成多个文本片段的关键字。"
@@ -482,9 +513,9 @@ function ToolOptions({ tool, options, setOptions }) {
                 onChange={update("matchPadding")}
               />
             </Field>
-          </>
-        ) : (
-          <>
+            </>
+          ) : (
+            <>
             <Field label="遮盖区域">
               <select
                 value={options.maskPreset}
@@ -549,8 +580,8 @@ function ToolOptions({ tool, options, setOptions }) {
                 </small>
               </div>
             )}
-          </>
-        )}
+            </>
+          ))}
       </div>
     );
   }
@@ -608,6 +639,7 @@ const defaultOptions = {
   color: "#1f4138",
   placement: "center",
   removalMode: "text",
+  removeTransparentOverlay: false,
   removeKeyword: "CONFIDENTIAL",
   matchPadding: "3",
   maskPreset: "header",
@@ -650,6 +682,7 @@ function Workspace({ tool }) {
 
   const hasRequiredKeyword =
     tool !== "removeWatermark" ||
+    options.removeTransparentOverlay ||
     options.removalMode !== "text" ||
     options.removeKeyword.trim().length > 0;
   const canProcess =
@@ -662,7 +695,9 @@ function Workspace({ tool }) {
     clearResults();
     try {
       const matches =
-        tool === "removeWatermark" && options.removalMode === "text"
+        tool === "removeWatermark" &&
+        options.removalMode === "text" &&
+        !options.removeTransparentOverlay
           ? await locateTextMatches(
               files[0],
               options.removeKeyword,

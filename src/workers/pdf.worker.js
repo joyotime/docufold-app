@@ -4,6 +4,11 @@ import {
   degrees,
   rgb,
 } from "pdf-lib";
+import {
+  OVERLAY_NOT_FOUND_MESSAGE,
+  removeTransparentOverlayXObjects,
+} from "../lib/pdfOverlayRemoval.js";
+import { NO_TEXT_WATERMARK_MESSAGE } from "../lib/textMatching.js";
 
 function withoutExtension(name) {
   return name.replace(/\.pdf$/i, "") || "document";
@@ -272,7 +277,7 @@ function drawTextMatchMasks(document, pageIndices, matches, padding) {
   }
 
   if (maskCount === 0) {
-    throw new Error("在指定页面中没有找到匹配的水印文字。");
+    throw new Error(NO_TEXT_WATERMARK_MESSAGE);
   }
   return maskCount;
 }
@@ -329,6 +334,7 @@ async function removeWatermarkPdf({
   file,
   ranges,
   removalMode,
+  removeTransparentOverlay,
   matches = [],
   matchPadding,
   maskPreset,
@@ -351,7 +357,10 @@ async function removeWatermarkPdf({
     rectHeight,
   };
 
-  if (removalMode === "text") {
+  if (removeTransparentOverlay) {
+    const removed = removeTransparentOverlayXObjects(document, pageIndices);
+    if (removed === 0) throw new Error(OVERLAY_NOT_FOUND_MESSAGE);
+  } else if (removalMode === "text") {
     const padding = Math.max(0, finiteNumber(matchPadding, "匹配留白"));
     drawTextMatchMasks(document, pageIndices, matches, padding);
   } else {

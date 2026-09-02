@@ -1,3 +1,9 @@
+export const NO_TEXT_WATERMARK_MESSAGE =
+  "未识别到匹配的文本水印（若是扫描件或转曲文字，请切换至【矩形遮罩】模式擦除）";
+
+const CHINESE_INTERNAL_WHITESPACE =
+  /([\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff])\s+(?=[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff])/gu;
+
 export function parsePageSelection(value, pageCount) {
   const normalizedValue = typeof value === "string" ? value : "";
   if (!normalizedValue.trim()) {
@@ -42,10 +48,12 @@ export function parsePageSelection(value, pageCount) {
 }
 
 function normalizeSearchText(value) {
-  const text = typeof value === "string" ? value : "";
-  return typeof text.normalize === "function"
-    ? text.normalize("NFKC").toLocaleLowerCase()
-    : text.toLocaleLowerCase();
+  const text = typeof value === "string" ? value.trim() : "";
+  const normalized =
+    typeof text.normalize === "function" ? text.normalize("NFKC") : text;
+  return normalized
+    .toLocaleLowerCase()
+    .replace(CHINESE_INTERNAL_WHITESPACE, "$1");
 }
 
 export function matchingItemIndices(items, keyword) {

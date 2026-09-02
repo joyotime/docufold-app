@@ -1,5 +1,6 @@
 import {
   matchingItemIndices,
+  NO_TEXT_WATERMARK_MESSAGE,
   parsePageSelection,
   rectangleForTextItem,
 } from "./textMatching.js";
@@ -50,6 +51,7 @@ export async function locateTextMatches(file, keyword, pageRanges) {
   if (typeof keyword !== "string" || !keyword.trim()) {
     throw new Error("请输入要匹配的水印关键字。");
   }
+  const trimmedKeyword = keyword.trim();
   assertReadableFile(file);
 
   let loadingTask;
@@ -89,7 +91,7 @@ export async function locateTextMatches(file, keyword, pageRanges) {
             items.push(item);
           }
         }
-        const matchedIndices = matchingItemIndices(items, keyword);
+        const matchedIndices = matchingItemIndices(items, trimmedKeyword);
         if (matchedIndices.length > 0) {
           matches.push({
             pageIndex,
@@ -114,6 +116,9 @@ export async function locateTextMatches(file, keyword, pageRanges) {
     }
   }
 
+  if (matches.length === 0) {
+    throw new Error(NO_TEXT_WATERMARK_MESSAGE);
+  }
   return matches;
 }
 

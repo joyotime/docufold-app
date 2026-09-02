@@ -598,6 +598,53 @@ select:focus-visible {
   box-shadow: 0 2px 8px rgba(35, 67, 56, 0.1);
 }
 
+.mode-toggle button:disabled {
+  color: #a6aeaa;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.overlay-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  border: 1px solid #d7dad4;
+  border-radius: 9px;
+  padding: 12px 13px;
+  background: white;
+  color: #4d5c56;
+  cursor: pointer;
+}
+
+.overlay-toggle.active {
+  border-color: #8fb6a8;
+  background: #f1f7f3;
+}
+
+.overlay-toggle input {
+  width: 17px;
+  height: 17px;
+  margin: 1px 0 0;
+  accent-color: var(--green);
+}
+
+.overlay-toggle > span {
+  display: grid;
+  gap: 4px;
+}
+
+.overlay-toggle strong {
+  color: var(--ink);
+  font-size: 10.5px;
+}
+
+.overlay-toggle small {
+  color: #87928d;
+  font-size: 9px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
 .rectangle-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
