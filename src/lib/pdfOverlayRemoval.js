@@ -10,7 +10,7 @@ import {
 } from "pdf-lib";
 
 export const OVERLAY_NOT_FOUND_MESSAGE =
-  "该文档水印与正文高度重叠且未以独立图层存储，建议使用选区遮罩或针对页眉页脚进行清理。";
+  "The watermark heavily overlaps the document content and is not stored as an independent layer. Try a selection mask or clean the header and footer areas instead.";
 
 const SUBTYPE = PDFName.of("Subtype");
 const FORM = PDFName.of("Form");
@@ -168,7 +168,7 @@ function decodeContentStream(stream) {
   if (!stream.dict.has(PDFName.of("Filter"))) {
     return stream.getContents();
   }
-  throw new Error("无法解码页面内容流。");
+  throw new Error("The page content stream could not be decoded.");
 }
 
 function pageContentBytes(page) {

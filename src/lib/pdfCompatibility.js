@@ -22,7 +22,7 @@ function installFindLast() {
   if (typeof Array.prototype.findLast === "function") return;
   defineMethod(Array.prototype, "findLast", function findLast(predicate) {
     if (typeof predicate !== "function") {
-      throw new TypeError("findLast 需要一个匹配函数。");
+      throw new TypeError("findLast requires a predicate function.");
     }
     for (let index = this.length - 1; index >= 0; index -= 1) {
       const value = this[index];
@@ -147,7 +147,7 @@ function installAbortSignalAny() {
     for (let index = 0; index < signalList.length; index += 1) {
       const signal = signalList[index];
       if (!signal || typeof signal.addEventListener !== "function") {
-        throw new TypeError("AbortSignal.any 仅接受 AbortSignal 列表。");
+        throw new TypeError("AbortSignal.any only accepts AbortSignal values.");
       }
       if (signal.aborted) {
         abort(signal);

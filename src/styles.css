@@ -59,7 +59,7 @@ select:focus-visible {
 .topbar {
   height: 72px;
   display: grid;
-  grid-template-columns: 260px 1fr 260px;
+  grid-template-columns: 260px 1fr 330px;
   align-items: center;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 254, 249, 0.94);
@@ -137,8 +137,6 @@ select:focus-visible {
 }
 
 .local-badge {
-  justify-self: end;
-  margin-right: 27px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -147,6 +145,38 @@ select:focus-visible {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.topbar-actions {
+  justify-self: end;
+  margin-right: 27px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.pro-cta {
+  min-height: 38px;
+  border: 1px solid #b65d31;
+  border-radius: 9px;
+  padding: 0 16px;
+  background: var(--orange);
+  color: white;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 6px 15px rgba(216, 119, 66, 0.22);
+}
+
+.pro-cta:hover {
+  background: #bf6234;
+}
+
+.pro-cta.activated {
+  border-color: #86aa9a;
+  background: #e7f2eb;
+  color: var(--green-dark);
+  box-shadow: none;
 }
 
 .local-badge span {
@@ -233,6 +263,26 @@ select:focus-visible {
   margin-bottom: 3px;
 }
 
+.tool-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-title-row strong {
+  margin-bottom: 0;
+}
+
+.pro-tag {
+  border-radius: 4px;
+  padding: 2px 4px;
+  background: #f5dfd1;
+  color: #9e4b26;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
 .sidebar button small {
   color: #818a86;
   font-size: 10.5px;
@@ -306,6 +356,15 @@ select:focus-visible {
   margin: 0;
   color: var(--muted);
   font-size: 14px;
+}
+
+.workspace-heading .hero-promise {
+  margin-top: 14px;
+  max-width: 680px;
+  color: var(--green-dark);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .work-card {
@@ -894,9 +953,145 @@ footer {
   font-size: 10px;
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(17, 31, 26, 0.58);
+  backdrop-filter: blur(5px);
+}
+
+.license-modal {
+  width: min(460px, 100%);
+  position: relative;
+  border: 1px solid #d8ddd6;
+  border-radius: 18px;
+  padding: 30px;
+  background: var(--paper);
+  box-shadow: 0 28px 80px rgba(13, 30, 24, 0.3);
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: #f0f0ea;
+  color: #68736e;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pro-kicker {
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.license-modal h2 {
+  margin: 9px 0 8px;
+  font-size: 30px;
+  letter-spacing: -0.04em;
+}
+
+.modal-intro {
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.license-modal form {
+  display: grid;
+  gap: 9px;
+}
+
+.license-modal form label {
+  color: #4d5c56;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.license-modal form input {
+  height: 44px;
+  border: 1px solid #cfd5cf;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: white;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.activate-submit {
+  height: 44px;
+  margin-top: 5px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--green);
+  color: white;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.activate-submit:disabled {
+  background: #adb8b2;
+  cursor: not-allowed;
+}
+
+.license-message {
+  border-radius: 7px;
+  padding: 9px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.license-message.error {
+  background: #fff1ea;
+  color: #984b28;
+}
+
+.license-message.success {
+  background: #eaf4ed;
+  color: #27634c;
+}
+.purchase-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.purchase-row a {
+  color: var(--orange);
+  font-weight: 750;
+}
+
+.license-privacy {
+  display: block;
+  margin-top: 14px;
+  color: #89928e;
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+
 @media (max-width: 900px) {
   .topbar {
-    grid-template-columns: 210px 1fr 190px;
+    grid-template-columns: 210px 1fr auto;
+  }
+
+  .local-badge {
+    display: none;
   }
 
   .app-body {
@@ -931,6 +1126,15 @@ footer {
 
   .local-badge {
     display: none;
+  }
+
+  .topbar-actions {
+    margin-right: 0;
+  }
+
+  .pro-cta {
+    min-height: 36px;
+    padding: 0 12px;
   }
 
   .topbar nav {
@@ -996,6 +1200,10 @@ footer {
 }
 
 @media (max-width: 480px) {
+  .license-modal {
+    padding: 26px 20px 22px;
+  }
+
   .topbar nav {
     justify-content: flex-start;
   }

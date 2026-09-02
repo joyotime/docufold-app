@@ -21,20 +21,20 @@ function parseRangeToken(token, pageCount) {
   if (/^\d+$/.test(cleaned)) {
     const page = Number(cleaned);
     if (page < 1 || page > pageCount) {
-      throw new Error(`页码 ${page} 超出文档范围（1-${pageCount}）。`);
+      throw new Error(`Page ${page} is outside the document range (1-${pageCount}).`);
     }
     return [page - 1];
   }
 
   const match = cleaned.match(/^(\d*)\s*-\s*(\d*)$/);
   if (!match || (!match[1] && !match[2])) {
-    throw new Error(`无法识别页码范围“${cleaned}”。请使用 1-3, 5, 8-10 格式。`);
+    throw new Error(`The page range ‘${cleaned}’ is invalid. Use a format such as 1-3, 5, 8-10.`);
   }
 
   const start = match[1] ? Number(match[1]) : 1;
   const end = match[2] ? Number(match[2]) : pageCount;
   if (start < 1 || start > pageCount || end < 1 || end > pageCount) {
-    throw new Error(`页码范围“${cleaned}”超出文档范围（1-${pageCount}）。`);
+    throw new Error(`The page range ‘${cleaned}’ is outside the document range (1-${pageCount}).`);
   }
 
   const step = start <= end ? 1 : -1;
@@ -75,7 +75,7 @@ function output(name, bytes) {
 async function mergePdfs({ files }) {
   const fileList = Array.from(files || []);
   if (fileList.length < 2) {
-    throw new Error("请至少选择两个 PDF 文件进行合并。");
+    throw new Error("Select at least two PDF files to merge.");
   }
 
   const merged = await PDFDocument.create();
@@ -198,7 +198,7 @@ async function watermarkPdf({
   color,
   placement,
 }) {
-  if (!text.trim()) throw new Error("请输入水印文字。");
+  if (!text.trim()) throw new Error("Enter watermark text.");
 
   const document = await PDFDocument.load(file.data);
   const font = await document.embedFont(StandardFonts.Helvetica);
@@ -232,7 +232,7 @@ async function watermarkPdf({
 function finiteNumber(value, label) {
   const number = Number(value);
   if (!Number.isFinite(number)) {
-    throw new Error(label + " 必须是有效数字。");
+    throw new Error(label + " must be a valid number.");
   }
   return number;
 }
@@ -258,17 +258,17 @@ function drawTextMatchMasks(document, pageIndices, matches, padding) {
     ) {
       const rectangle = rectangles[rectangleIndex];
       page.drawRectangle({
-        x: finiteNumber(rectangle.x, "匹配区域 X") - padding,
-        y: finiteNumber(rectangle.y, "匹配区域 Y") - padding,
+        x: finiteNumber(rectangle.x, "Match area X") - padding,
+        y: finiteNumber(rectangle.y, "Match area Y") - padding,
         width: Math.max(
           1,
-          finiteNumber(rectangle.width, "匹配区域宽度") + padding * 2,
+          finiteNumber(rectangle.width, "Match area width") + padding * 2,
         ),
         height: Math.max(
           1,
-          finiteNumber(rectangle.height, "匹配区域高度") + padding * 2,
+          finiteNumber(rectangle.height, "Match area height") + padding * 2,
         ),
-        rotate: degrees(finiteNumber(rectangle.angle, "匹配区域角度")),
+        rotate: degrees(finiteNumber(rectangle.angle, "Match area angle")),
         color: rgb(1, 1, 1),
         opacity: 1,
       });
@@ -287,27 +287,27 @@ function maskRectangleForPage(page, options) {
   if (options.maskPreset === "header") {
     const height = Math.min(
       pageHeight,
-      Math.max(1, finiteNumber(options.maskMargin, "顶部边距")),
+      Math.max(1, finiteNumber(options.maskMargin, "Top mask height")),
     );
     return { x: 0, y: pageHeight - height, width: pageWidth, height };
   }
   if (options.maskPreset === "footer") {
     const height = Math.min(
       pageHeight,
-      Math.max(1, finiteNumber(options.maskMargin, "底部边距")),
+      Math.max(1, finiteNumber(options.maskMargin, "Bottom mask height")),
     );
     return { x: 0, y: 0, width: pageWidth, height };
   }
 
-  const x = finiteNumber(options.rectX, "矩形 X");
-  const y = finiteNumber(options.rectY, "矩形 Y");
-  const width = finiteNumber(options.rectWidth, "矩形宽度");
-  const height = finiteNumber(options.rectHeight, "矩形高度");
+  const x = finiteNumber(options.rectX, "Rectangle X");
+  const y = finiteNumber(options.rectY, "Rectangle Y");
+  const width = finiteNumber(options.rectWidth, "Rectangle width");
+  const height = finiteNumber(options.rectHeight, "Rectangle height");
   if (x < 0 || y < 0 || width <= 0 || height <= 0) {
-    throw new Error("自定义矩形需要非负坐标以及大于 0 的宽度和高度。");
+    throw new Error("A custom rectangle needs non-negative coordinates and dimensions greater than zero.");
   }
   if (x >= pageWidth || y >= pageHeight) {
-    throw new Error("自定义矩形起点超出页面范围。");
+    throw new Error("The custom rectangle origin is outside the page.");
   }
   return {
     x,
@@ -361,7 +361,7 @@ async function removeWatermarkPdf({
     const removed = removeTransparentOverlayXObjects(document, pageIndices);
     if (removed === 0) throw new Error(OVERLAY_NOT_FOUND_MESSAGE);
   } else if (removalMode === "text") {
-    const padding = Math.max(0, finiteNumber(matchPadding, "匹配留白"));
+    const padding = Math.max(0, finiteNumber(matchPadding, "Match padding"));
     drawTextMatchMasks(document, pageIndices, matches, padding);
   } else {
     drawRectangleMasks(document, pageIndices, options);
@@ -387,13 +387,13 @@ self.addEventListener("message", async ({ data }) => {
   const { id, action, payload } = data;
   try {
     const handler = handlers[action];
-    if (!handler) throw new Error("未知的 PDF 操作。");
+    if (!handler) throw new Error("Unknown PDF operation.");
     const result = await handler(payload);
     const buffers = result.map(({ bytes }) => bytes.buffer);
     self.postMessage({ id, result }, buffers);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "PDF 处理失败，请确认文件有效。";
+      error instanceof Error ? error.message : "PDF processing failed. Confirm that the file is valid.";
     self.postMessage({ id, error: message });
   }
 });

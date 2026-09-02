@@ -1,69 +1,102 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Stirling-Tools/Stirling-PDF/main/docs/stirling.png" width="80" alt="Stirling PDF logo">
-</p>
+# DocuFold
 
-<h1 align="center">Stirling PDF - The Open-Source PDF Platform</h1>
+**100% Client-Side & Private PDF Tools. Your files never touch any server.**
 
-Stirling PDF is a powerful, open-source PDF editing platform. Run it as a personal desktop app, in the browser, or deploy it on your own servers with a private API. Edit, sign, redact, convert, and automate PDFs without sending documents to external services.
+DocuFold is a static React application for private PDF editing in the browser.
+PDF parsing, previews, and exports run locally with PDF.js, pdf-lib, and a Web
+Worker. The application has no document-processing backend and can be deployed
+directly to Vercel.
 
-<p align="center">
-  <a href="https://hub.docker.com/r/stirlingtools/stirling-pdf">
-    <img src="https://img.shields.io/docker/pulls/frooodle/s-pdf" alt="Docker Pulls">
-  </a>
-  <a href="https://discord.gg/HYmhKj45pU">
-    <img src="https://img.shields.io/discord/1068636748814483718?label=Discord" alt="Discord">
-  </a>
-  <a href="https://scorecard.dev/viewer/?uri=github.com/Stirling-Tools/Stirling-PDF">
-    <img src="https://api.scorecard.dev/projects/github.com/Stirling-Tools/Stirling-PDF/badge" alt="OpenSSF Scorecard">
-  </a>
-  <a href="https://github.com/Stirling-Tools/stirling-pdf">
-    <img src="https://img.shields.io/github/stars/stirling-tools/stirling-pdf?style=social" alt="GitHub Repo stars">
-  </a>
-</p>
+## Features
 
-![Stirling PDF - Dashboard](images/home-light.png)
+Free tools:
 
-## Key Capabilities
+- Merge PDF files.
+- Split a PDF by page or range.
+- Rotate every page or selected pages.
 
-- **Everywhere you work** - Desktop client, browser UI, and self-hosted server with a private API.
-- **50+ PDF tools** - Edit, merge, split, sign, redact, convert, OCR, compress, and more.
-- **Automation & workflows** - No-code pipelines direct in UI with APIs to process millions of PDFs.
-- **Enterprise‑grade** - SSO, auditing, and flexible on‑prem deployments.
-- **Developer platform** - REST APIs available for nearly all tools to integrate into your existing systems.
-- **Global UI** - Interface available in 40+ languages.
+DocuFold Pro tools:
 
-For a full feature list, see the docs: **https://docs.stirlingpdf.com**
+- Add text watermarks.
+- Remove selectable text watermarks.
+- Cover headers, footers, or custom rectangles.
+- Remove independent transparent Form/XObject overlays when the PDF structure
+  makes that possible.
+- Run supported operations in batch workflows.
 
-## Quick Start
+## Local development
+
+Requirements: Node.js 22.13 or later and npm.
 
 ```bash
-docker run -p 8080:8080 docker.stirlingpdf.com/stirlingtools/stirling-pdf
+npm install
+npm run dev
 ```
 
-Then open: http://localhost:8080
+Create a production build with:
 
-For full installation options (including desktop and Kubernetes), see our [Documentation Guide](https://docs.stirlingpdf.com/#documentation-guide).
+```bash
+npm run build
+```
 
-## Resources
+The static output is written to `dist/`.
 
-- [**Documentation**](https://docs.stirlingpdf.com)
-- [**Homepage**](https://stirling.com)
-- [**API Docs**](https://registry.scalar.com/@stirlingpdf/apis/stirling-pdf-processing-api/)
-- [**Server Plan & Enterprise**](https://docs.stirlingpdf.com/Paid-Offerings)
+## Vercel deployment
 
-## Support
+The included `vercel.json` selects Vite, runs `npm run build`, publishes
+`dist/`, and rewrites application routes to `index.html` for SPA navigation.
+No Java service, database, or server-side environment variables are required.
 
-- **Community**: [Discord](https://discord.gg/HYmhKj45pU)
-- **Bug Reports**: [GitHub Issues](https://github.com/Stirling-Tools/Stirling-PDF/issues)
+## Pro license activation
 
-## Contributing
+The **Activate Pro** dialog sends the entered key directly to Lemon Squeezy's
+License API from the browser. The key is not persisted. A successful activation
+stores only this browser flag:
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+```text
+is_pro_activated=true
+```
 
-This project uses [Task](https://taskfile.dev/) as a unified command runner for all build, dev, and test commands. Run `task dev` to get started running the editor, run `task` to see the most common commands, or see the [Developer Guide](DeveloperGuide.md) for full details.
+Before launch, replace the placeholder checkout URL in
+`src/lib/license.js` with the production Lemon Squeezy checkout URL.
 
-For adding translations, see the [Translation Guide](devGuide/HowToAddNewLanguage.md).
+This local browser flag is appropriate for a lightweight client-only product
+preview, but it is not tamper-proof entitlement enforcement. A production app
+that requires strong license enforcement should validate entitlements through
+a trusted service without uploading customer PDF files.
 
-## License
+## Help and FAQ
 
-Stirling PDF is open-core. See [LICENSE](LICENSE) for details.
+### Do my files leave my device?
+
+No. PDF documents are processed in browser memory and are never uploaded by
+DocuFold. License activation sends only the license key and instance name to
+Lemon Squeezy.
+
+### Why was a text watermark not detected?
+
+Scanned pages and text converted to vector outlines do not expose selectable
+text. Switch to **Rectangle Mask** and cover the affected area instead.
+
+### Why was a transparent overlay not removed?
+
+Some PDFs flatten watermarks into the same content stream as the document.
+When the watermark is not stored as an independent layer, use a custom mask or
+clean the header or footer area.
+
+### Where is Pro activation stored?
+
+Activation status is stored only in this browser's localStorage. Clearing site
+data resets the local status and requires activation again.
+
+### Which browsers are supported?
+
+The production build targets modern browsers and Safari 14 or later. Large PDF
+files require enough available device memory for local processing.
+
+## Privacy and security
+
+- No PDF upload endpoint is used.
+- No account or database is required.
+- Generated download URLs exist only for the current page session.
+- Refreshing the page clears files held by the application.

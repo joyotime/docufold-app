@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import LicenseModal from "./components/LicenseModal.jsx";
+import { readProActivation } from "./lib/license.js";
+
 import {
   locateTextMatches,
   renderFirstPage,
@@ -9,38 +12,43 @@ import { runPdfTask, serializeFiles } from "./lib/pdfWorkerClient.js";
 const tools = [
   {
     id: "merge",
-    title: "合并 PDF",
-    shortTitle: "合并",
-    description: "按顺序组合多个文档",
+    title: "Merge PDFs",
+    shortTitle: "Merge",
+    description: "Combine multiple documents in any order",
     icon: "layers",
+    pro: false,
   },
   {
     id: "split",
-    title: "拆分 PDF",
-    shortTitle: "拆分",
-    description: "按页或范围生成新文件",
+    title: "Split PDF",
+    shortTitle: "Split",
+    description: "Create new files by page or range",
     icon: "split",
+    pro: false,
   },
   {
     id: "rotate",
-    title: "旋转 PDF",
-    shortTitle: "旋转",
-    description: "旋转全部或指定页面",
+    title: "Rotate PDF",
+    shortTitle: "Rotate",
+    description: "Rotate every page or selected pages",
     icon: "rotate",
+    pro: false,
   },
   {
     id: "watermark",
-    title: "添加水印",
-    shortTitle: "水印",
-    description: "添加本地文字水印",
+    title: "Add Watermark",
+    shortTitle: "Watermark",
+    description: "Add a local text watermark",
     icon: "watermark",
+    pro: true,
   },
   {
     id: "removeWatermark",
     title: "Remove Watermark",
-    shortTitle: "去水印",
-    description: "匹配文字或遮盖固定区域",
+    shortTitle: "Remove",
+    description: "Remove text, masks, or overlay layers",
     icon: "eraser",
+    pro: true,
   },
 ];
 
@@ -178,8 +186,12 @@ function PdfThumbnail({ file }) {
   return (
     <div className="thumbnail">
       {!failed && <canvas ref={canvasRef} />}
-      {failed && <span>无法预览</span>}
-      {pageCount && <span className="page-count">{pageCount} 页</span>}
+      {failed && <span>Preview unavailable</span>}
+      {pageCount && (
+        <span className="page-count">
+          {pageCount} {pageCount === 1 ? "page" : "pages"}
+        </span>
+      )}
     </div>
   );
 }
@@ -233,8 +245,8 @@ function FileDrop({ multiple, onFiles }) {
           <Icon name="upload" size={28} />
         </span>
         <span>
-          <strong>{multiple ? "选择 PDF 文件" : "选择一个 PDF 文件"}</strong>
-          <small>或拖放到这里 · 文件不会离开你的设备</small>
+          <strong>{multiple ? "Select PDF files" : "Select a PDF file"}</strong>
+          <small>or drag and drop here · Files never leave your device</small>
         </span>
       </button>
     </div>
@@ -259,7 +271,7 @@ function FileCard({ file, index, total, onRemove, onMove }) {
           <>
             <button
               type="button"
-              aria-label="上移文件"
+              aria-label="Move file up"
               disabled={index === 0}
               onClick={() => onMove(index, -1)}
             >
@@ -268,7 +280,7 @@ function FileCard({ file, index, total, onRemove, onMove }) {
             <button
               className="move-down"
               type="button"
-              aria-label="下移文件"
+              aria-label="Move file down"
               disabled={index === total - 1}
               onClick={() => onMove(index, 1)}
             >
@@ -278,7 +290,7 @@ function FileCard({ file, index, total, onRemove, onMove }) {
         )}
         <button
           type="button"
-          aria-label="移除文件"
+          aria-label="Remove file"
           onClick={() => onRemove(index)}
         >
           <Icon name="trash" size={17} />
@@ -307,13 +319,13 @@ function ToolOptions({ tool, options, setOptions }) {
     return (
       <div className="options-grid one-column">
         <Field
-          label="拆分范围"
-          hint="留空时每一页生成一个文件；逗号分隔的每段生成一个 PDF。"
+          label="Split ranges"
+          hint="Leave blank to create one PDF per page. Each comma-separated range creates one file."
         >
           <input
             value={options.ranges}
             onChange={update("ranges")}
-            placeholder="例如：1-3, 4-6, 9"
+            placeholder="Example: 1-3, 4-6, 9"
           />
         </Field>
       </div>
@@ -323,21 +335,21 @@ function ToolOptions({ tool, options, setOptions }) {
   if (tool === "rotate") {
     return (
       <div className="options-grid">
-        <Field label="页面范围" hint="留空表示全部页面。">
+        <Field label="Page range" hint="Leave blank to process every page.">
           <input
             value={options.ranges}
             onChange={update("ranges")}
-            placeholder="例如：1-3, 7"
+            placeholder="Example: 1-3, 7"
           />
         </Field>
-        <Field label="旋转角度">
+        <Field label="Rotation angle">
           <select
             value={options.rotationAngle}
             onChange={update("rotationAngle")}
           >
-            <option value="90">顺时针 90°</option>
-            <option value="180">旋转 180°</option>
-            <option value="270">逆时针 90°</option>
+            <option value="90">90° clockwise</option>
+            <option value="180">180°</option>
+            <option value="270">90° counterclockwise</option>
           </select>
         </Field>
       </div>
@@ -347,28 +359,28 @@ function ToolOptions({ tool, options, setOptions }) {
   if (tool === "watermark") {
     return (
       <div className="options-grid watermark-options">
-        <Field label="水印文字">
+        <Field label="Watermark text">
           <input
             value={options.text}
             onChange={update("text")}
-            placeholder="例如：CONFIDENTIAL"
+            placeholder="Example: CONFIDENTIAL"
           />
         </Field>
-        <Field label="页面范围" hint="留空表示全部页面。">
+        <Field label="Page range" hint="Leave blank to process every page.">
           <input
             value={options.ranges}
             onChange={update("ranges")}
-            placeholder="例如：1-5, 8"
+            placeholder="Example: 1-5, 8"
           />
         </Field>
-        <Field label="布局">
+        <Field label="Placement">
           <select value={options.placement} onChange={update("placement")}>
-            <option value="center">居中</option>
-            <option value="tile">平铺</option>
-            <option value="footer">页脚</option>
+            <option value="center">Center</option>
+            <option value="tile">Tiled</option>
+            <option value="footer">Footer</option>
           </select>
         </Field>
-        <Field label={"字号 · " + options.size + "px"}>
+        <Field label={"Font size · " + options.size + "px"}>
           <input
             type="range"
             min="12"
@@ -378,7 +390,7 @@ function ToolOptions({ tool, options, setOptions }) {
             onChange={update("size")}
           />
         </Field>
-        <Field label={"角度 · " + options.watermarkAngle + "°"}>
+        <Field label={"Angle · " + options.watermarkAngle + "°"}>
           <input
             type="range"
             min="-90"
@@ -390,7 +402,7 @@ function ToolOptions({ tool, options, setOptions }) {
         </Field>
         <Field
           label={
-            "透明度 · " + Math.round(Number(options.opacity) * 100) + "%"
+            "Opacity · " + Math.round(Number(options.opacity) * 100) + "%"
           }
         >
           <input
@@ -402,7 +414,7 @@ function ToolOptions({ tool, options, setOptions }) {
             onChange={update("opacity")}
           />
         </Field>
-        <Field label="颜色">
+        <Field label="Color">
           <span className="color-control">
             <input
               type="color"
@@ -420,8 +432,8 @@ function ToolOptions({ tool, options, setOptions }) {
     return (
       <div className="options-grid remove-options">
         <div className="remove-mode span-all">
-          <span>清理方式</span>
-          <div className="mode-toggle" role="group" aria-label="去水印方式">
+          <span>Removal method</span>
+          <div className="mode-toggle" role="group" aria-label="Watermark removal method">
             <button
               type="button"
               disabled={options.removeTransparentOverlay}
@@ -433,7 +445,7 @@ function ToolOptions({ tool, options, setOptions }) {
                 }))
               }
             >
-              文本匹配
+              Text Match
             </button>
             <button
               type="button"
@@ -446,13 +458,13 @@ function ToolOptions({ tool, options, setOptions }) {
                 }))
               }
             >
-              矩形遮罩
+              Rectangle Mask
             </button>
           </div>
           <small>
             {options.removeTransparentOverlay
-              ? "开启后仅移除独立 Form XObject 或使用透明 GState 绘制的对象。"
-              : "文本模式由 PDF.js 定位可提取文字；扫描件或路径水印请使用矩形遮罩。"}
+              ? "Only independent Form XObjects or objects drawn with transparent graphics states are removed."
+              : "Text Match uses PDF.js to locate selectable text. Use Rectangle Mask for scans or outlined text."}
           </small>
         </div>
 
@@ -473,20 +485,19 @@ function ToolOptions({ tool, options, setOptions }) {
             }
           />
           <span>
-            <strong>
-              Remove Transparent Overlay / 清除透明叠加图层
-            </strong>
+            <strong>Remove Transparent Overlay</strong>
             <small>
-              适用于以独立 Form、透明 XObject 或 ExtGState 叠加的矢量水印。
+              Removes vector watermarks stored as independent Forms,
+              transparent XObjects, or ExtGState overlays.
             </small>
           </span>
         </label>
 
-        <Field label="页面范围" hint="留空表示全部页面。">
+        <Field label="Page range" hint="Leave blank to process every page.">
           <input
             value={options.ranges}
             onChange={update("ranges")}
-            placeholder="例如：1-5, 8"
+            placeholder="Example: 1-5, 8"
           />
         </Field>
 
@@ -494,16 +505,16 @@ function ToolOptions({ tool, options, setOptions }) {
           (options.removalMode === "text" ? (
             <>
             <Field
-              label="水印关键字"
-              hint="忽略大小写与空白，并支持被拆成多个文本片段的关键字。"
+              label="Watermark keyword"
+              hint="Matches across case differences, extra spaces, and split text fragments."
             >
               <input
                 value={options.removeKeyword}
                 onChange={update("removeKeyword")}
-                placeholder="例如：CONFIDENTIAL"
+                placeholder="Example: CONFIDENTIAL"
               />
             </Field>
-            <Field label={"匹配留白 · " + options.matchPadding + " pt"}>
+            <Field label={"Match padding · " + options.matchPadding + " pt"}>
               <input
                 type="range"
                 min="0"
@@ -516,23 +527,23 @@ function ToolOptions({ tool, options, setOptions }) {
             </>
           ) : (
             <>
-            <Field label="遮盖区域">
+            <Field label="Mask area">
               <select
                 value={options.maskPreset}
                 onChange={update("maskPreset")}
               >
-                <option value="header">顶部页眉</option>
-                <option value="footer">底部页脚</option>
-                <option value="custom">自定义矩形</option>
+                <option value="header">Header</option>
+                <option value="footer">Footer</option>
+                <option value="custom">Custom rectangle</option>
               </select>
             </Field>
             {options.maskPreset !== "custom" ? (
               <Field
                 label={
-                  (options.maskPreset === "header" ? "顶部" : "底部") +
-                  "遮盖高度 · pt"
+                  (options.maskPreset === "header" ? "Top" : "Bottom") +
+                  " mask height · pt"
                 }
-                hint="PDF 常用页面宽约 595 pt、高约 842 pt。"
+                hint="A common PDF page is approximately 595 × 842 pt."
               >
                 <input
                   type="number"
@@ -543,7 +554,7 @@ function ToolOptions({ tool, options, setOptions }) {
               </Field>
             ) : (
               <div className="rectangle-grid span-all">
-                <Field label="X 坐标">
+                <Field label="X coordinate">
                   <input
                     type="number"
                     min="0"
@@ -551,7 +562,7 @@ function ToolOptions({ tool, options, setOptions }) {
                     onChange={update("rectX")}
                   />
                 </Field>
-                <Field label="Y 坐标">
+                <Field label="Y coordinate">
                   <input
                     type="number"
                     min="0"
@@ -559,7 +570,7 @@ function ToolOptions({ tool, options, setOptions }) {
                     onChange={update("rectY")}
                   />
                 </Field>
-                <Field label="宽度">
+                <Field label="Width">
                   <input
                     type="number"
                     min="1"
@@ -567,7 +578,7 @@ function ToolOptions({ tool, options, setOptions }) {
                     onChange={update("rectWidth")}
                   />
                 </Field>
-                <Field label="高度">
+                <Field label="Height">
                   <input
                     type="number"
                     min="1"
@@ -576,7 +587,7 @@ function ToolOptions({ tool, options, setOptions }) {
                   />
                 </Field>
                 <small className="coordinate-hint">
-                  单位为 PDF point，原点位于页面左下角。
+                  Values use PDF points; the origin is at the bottom-left.
                 </small>
               </div>
             )}
@@ -604,15 +615,15 @@ function Results({ results, onClear }) {
         <div>
           <span className="success-mark">✓</span>
           <div>
-            <strong>处理完成</strong>
+            <strong>Processing complete</strong>
             <small>
               {results.length === 1
-                ? "文件已准备好下载"
-                : "已生成 " + results.length + " 个文件"}
+                ? "Your file is ready to download"
+                : "Generated " + results.length + " files"}
             </small>
           </div>
         </div>
-        <button type="button" onClick={onClear}>清除结果</button>
+        <button type="button" onClick={onClear}>Clear results</button>
       </div>
       <div className="result-list">
         {results.map((result) => (
@@ -650,7 +661,7 @@ const defaultOptions = {
   rectHeight: "72",
 };
 
-function Workspace({ tool }) {
+function Workspace({ tool, isProActivated, onRequirePro }) {
   const toolInfo = tools.find((item) => item.id === tool);
   const [files, setFiles] = useState([]);
   const [options, setOptions] = useState(defaultOptions);
@@ -690,6 +701,16 @@ function Workspace({ tool }) {
     hasRequiredKeyword;
 
   const processFiles = async () => {
+    const requiresPro =
+      toolInfo.pro || (files.length > 1 && tool !== "merge");
+    if (requiresPro && !isProActivated) {
+      setError(
+        "This feature requires DocuFold Pro. Activate a license to continue.",
+      );
+      onRequirePro();
+      return;
+    }
+
     setProcessing(true);
     setError("");
     clearResults();
@@ -735,7 +756,7 @@ function Workspace({ tool }) {
       setError(
         taskError instanceof Error
           ? taskError.message
-          : "PDF 处理失败，请重试。",
+          : "PDF processing failed. Try again.",
       );
     } finally {
       setProcessing(false);
@@ -745,9 +766,12 @@ function Workspace({ tool }) {
   return (
     <main className="workspace">
       <section className="workspace-heading">
-        <div className="eyebrow"><span /> 本地 PDF 工作台</div>
+        <div className="eyebrow"><span /> LOCAL PDF WORKSPACE</div>
         <h1>{toolInfo.title}</h1>
-        <p>{toolInfo.description}，处理全程只发生在当前浏览器中。</p>
+        <p>{toolInfo.description}. Everything is processed in this browser.</p>
+        <p className="hero-promise">
+          100% Client-Side &amp; Private PDF Tools. Your files never touch any server.
+        </p>
       </section>
 
       <section className="work-card">
@@ -756,7 +780,9 @@ function Workspace({ tool }) {
         {files.length > 0 && (
           <div className="files-section">
             <div className="section-label">
-              <span>已选择 {files.length} 个文件</span>
+              <span>
+                {files.length} {files.length === 1 ? "file" : "files"} selected
+              </span>
               <button
                 type="button"
                 onClick={() => {
@@ -764,7 +790,7 @@ function Workspace({ tool }) {
                   clearResults();
                 }}
               >
-                全部清除
+                Clear all
               </button>
             </div>
             <div
@@ -811,7 +837,7 @@ function Workspace({ tool }) {
 
         <div className="process-row">
           <div className="privacy-note">
-            <Icon name="shield" size={18} /> 无上传 · 无账号 · 无服务器
+            <Icon name="shield" size={18} /> No uploads · No accounts · No servers
           </div>
           <button
             className="process-button"
@@ -821,7 +847,7 @@ function Workspace({ tool }) {
           >
             {processing ? (
               <>
-                <span className="spinner" /> 正在本地处理…
+                <span className="spinner" /> Processing locally…
               </>
             ) : (
               toolInfo.title
@@ -841,6 +867,8 @@ function App() {
     return tools.some((tool) => tool.id === hash) ? hash : "merge";
   }, []);
   const [activeTool, setActiveTool] = useState(initialTool);
+  const [isProActivated, setIsProActivated] = useState(readProActivation);
+  const [licenseModalOpen, setLicenseModalOpen] = useState(false);
 
   useEffect(() => {
     const syncTool = () => {
@@ -867,7 +895,7 @@ function App() {
           <span className="brand-mark"><span /><span /><span /></span>
           <span>DocuFold</span>
         </a>
-        <nav aria-label="PDF 工具">
+        <nav aria-label="PDF tools">
           {tools.map((tool) => (
             <a
               key={tool.id}
@@ -879,12 +907,23 @@ function App() {
             </a>
           ))}
         </nav>
-        <div className="local-badge"><span /> 100% 本地处理</div>
+        <div className="topbar-actions">
+          <div className="local-badge"><span /> Local only</div>
+          <button
+            className={
+              "pro-cta" + (isProActivated ? " activated" : "")
+            }
+            type="button"
+            onClick={() => setLicenseModalOpen(true)}
+          >
+            {isProActivated ? "Pro Activated" : "Activate Pro"}
+          </button>
+        </div>
       </header>
 
       <div className="app-body">
         <aside className="sidebar">
-          <p>PDF 工具</p>
+          <p>PDF TOOLS</p>
           {tools.map((tool) => (
             <button
               key={tool.id}
@@ -894,7 +933,10 @@ function App() {
             >
               <span className="tool-icon"><Icon name={tool.icon} /></span>
               <span>
-                <strong>{tool.title}</strong>
+                <span className="tool-title-row">
+                  <strong>{tool.title}</strong>
+                  {tool.pro && <span className="pro-tag">PRO</span>}
+                </span>
                 <small>{tool.description}</small>
               </span>
               <span className="tool-arrow">→</span>
@@ -902,18 +944,33 @@ function App() {
           ))}
           <div className="sidebar-privacy">
             <Icon name="shield" size={25} />
-            <strong>隐私优先</strong>
-            <p>文件只保存在浏览器内存中，刷新页面后自动清除。</p>
+            <strong>Privacy first</strong>
+            <p>
+              Files stay in browser memory and are cleared when you refresh
+              this page.
+            </p>
           </div>
         </aside>
 
-        <Workspace key={activeTool} tool={activeTool} />
+        <Workspace
+          key={activeTool}
+          tool={activeTool}
+          isProActivated={isProActivated}
+          onRequirePro={() => setLicenseModalOpen(true)}
+        />
       </div>
 
       <footer>
-        <span>DocuFold · 浏览器本地 PDF 工具</span>
+        <span>DocuFold · Private browser-based PDF tools</span>
         <span>Powered by pdf-lib &amp; PDF.js</span>
       </footer>
+
+      <LicenseModal
+        isOpen={licenseModalOpen}
+        isActivated={isProActivated}
+        onActivated={() => setIsProActivated(true)}
+        onClose={() => setLicenseModalOpen(false)}
+      />
     </div>
   );
 }

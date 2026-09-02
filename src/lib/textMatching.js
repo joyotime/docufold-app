@@ -1,5 +1,5 @@
 export const NO_TEXT_WATERMARK_MESSAGE =
-  "未识别到匹配的文本水印（若是扫描件或转曲文字，请切换至【矩形遮罩】模式擦除）";
+  "No matching text watermark was found. If this is a scanned PDF or outlined text, switch to Rectangle Mask mode.";
 
 const CHINESE_INTERNAL_WHITESPACE =
   /([\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff])\s+(?=[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff])/gu;
@@ -19,7 +19,7 @@ export function parsePageSelection(value, pageCount) {
       const page = Number(token);
       if (page < 1 || page > pageCount) {
         throw new Error(
-          "页码 " + page + " 超出文档范围（1-" + pageCount + "）。",
+          "Page " + page + " is outside the document range (1-" + pageCount + ").",
         );
       }
       selected.add(page - 1);
@@ -29,14 +29,14 @@ export function parsePageSelection(value, pageCount) {
     const match = token.match(/^(\d*)\s*-\s*(\d*)$/);
     if (!match || (!match[1] && !match[2])) {
       throw new Error(
-        "无法识别页码范围“" + token + "”。请使用 1-3, 5 格式。",
+        "The page range ‘" + token + "’ is invalid. Use a format such as 1-3, 5.",
       );
     }
     const start = match[1] ? Number(match[1]) : 1;
     const end = match[2] ? Number(match[2]) : pageCount;
     if (start < 1 || end < 1 || start > pageCount || end > pageCount) {
       throw new Error(
-        "页码范围“" + token + "”超出文档范围（1-" + pageCount + "）。",
+        "The page range ‘" + token + "’ is outside the document range (1-" + pageCount + ").",
       );
     }
     const step = start <= end ? 1 : -1;
@@ -99,13 +99,13 @@ export function rectangleForTextItem(item) {
     typeof item.transform.length !== "number" ||
     item.transform.length < 6
   ) {
-    throw new Error("PDF 文本定位信息无效，无法生成擦除区域。");
+    throw new Error("The PDF text position is invalid, so a removal area could not be created.");
   }
   const transform = Array.from(item.transform);
   const x = Number(transform[4]);
   const y = Number(transform[5]);
   if (!Number.isFinite(x) || !Number.isFinite(y)) {
-    throw new Error("PDF 文本坐标无效，无法生成擦除区域。");
+    throw new Error("The PDF text coordinates are invalid, so a removal area could not be created.");
   }
   const fontHeight =
     Math.hypot(Number(transform[2]), Number(transform[3])) ||

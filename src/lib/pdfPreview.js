@@ -22,15 +22,15 @@ async function loadPdfJs() {
           !pdfjs.GlobalWorkerOptions ||
           typeof workerModule.default !== "string"
         ) {
-          throw new Error("PDF 预览组件未正确初始化。");
+          throw new Error("The PDF preview component was not initialized correctly.");
         }
         pdfjs.GlobalWorkerOptions.workerSrc = workerModule.default;
         return pdfjs;
       })
       .catch((error) => {
         pdfjsPromise = undefined;
-        const detail = error instanceof Error ? error.message : "未知加载错误";
-        throw new Error("PDF 预览组件加载失败：" + detail);
+        const detail = error instanceof Error ? error.message : "Unknown loading error";
+        throw new Error("The PDF preview component failed to load: " + detail);
       });
   }
   return pdfjsPromise;
@@ -38,18 +38,18 @@ async function loadPdfJs() {
 
 function assertReadableFile(file) {
   if (!file || typeof file.arrayBuffer !== "function") {
-    throw new Error("无法读取所选 PDF 文件，请重新选择文件。");
+    throw new Error("The selected PDF could not be read. Select the file again.");
   }
 }
 
 function readableError(prefix, error) {
-  const detail = error instanceof Error ? error.message : "未知错误";
-  return new Error(prefix + "：" + detail);
+  const detail = error instanceof Error ? error.message : "Unknown error";
+  return new Error(prefix + ": " + detail);
 }
 
 export async function locateTextMatches(file, keyword, pageRanges) {
   if (typeof keyword !== "string" || !keyword.trim()) {
-    throw new Error("请输入要匹配的水印关键字。");
+    throw new Error("Enter the watermark keyword to match.");
   }
   const trimmedKeyword = keyword.trim();
   assertReadableFile(file);
@@ -65,7 +65,7 @@ export async function locateTextMatches(file, keyword, pageRanges) {
       useSystemFonts: true,
     });
     if (!loadingTask || !loadingTask.promise) {
-      throw new Error("PDF.js 未返回有效的加载任务。");
+      throw new Error("PDF.js did not return a valid loading task.");
     }
     const document = await loadingTask.promise;
     const pageIndices = parsePageSelection(pageRanges || "", document.numPages);
@@ -105,7 +105,7 @@ export async function locateTextMatches(file, keyword, pageRanges) {
       }
     }
   } catch (error) {
-    throw readableError("无法分析 PDF 水印文字", error);
+    throw readableError("The PDF watermark text could not be analyzed", error);
   } finally {
     if (loadingTask && typeof loadingTask.destroy === "function") {
       try {
@@ -125,7 +125,7 @@ export async function locateTextMatches(file, keyword, pageRanges) {
 export async function renderFirstPage(file, canvas) {
   assertReadableFile(file);
   if (!canvas || typeof canvas.getContext !== "function") {
-    throw new Error("PDF 预览画布不可用。");
+    throw new Error("The PDF preview canvas is unavailable.");
   }
 
   let loadingTask;
@@ -138,7 +138,7 @@ export async function renderFirstPage(file, canvas) {
       useSystemFonts: true,
     });
     if (!loadingTask || !loadingTask.promise) {
-      throw new Error("PDF.js 未返回有效的加载任务。");
+      throw new Error("PDF.js did not return a valid loading task.");
     }
     const document = await loadingTask.promise;
     page = await document.getPage(1);
@@ -147,7 +147,7 @@ export async function renderFirstPage(file, canvas) {
     const viewport = page.getViewport({ scale });
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
     const context = canvas.getContext("2d", { alpha: false });
-    if (!context) throw new Error("浏览器无法创建 PDF 预览画布。");
+    if (!context) throw new Error("The browser could not create a PDF preview canvas.");
 
     canvas.width = Math.floor(viewport.width * pixelRatio);
     canvas.height = Math.floor(viewport.height * pixelRatio);
@@ -162,12 +162,12 @@ export async function renderFirstPage(file, canvas) {
         pixelRatio === 1 ? undefined : [pixelRatio, 0, 0, pixelRatio, 0, 0],
     });
     if (!renderTask || !renderTask.promise) {
-      throw new Error("PDF.js 未返回有效的渲染任务。");
+      throw new Error("PDF.js did not return a valid rendering task.");
     }
     await renderTask.promise;
     return document.numPages;
   } catch (error) {
-    throw readableError("PDF 预览失败", error);
+    throw readableError("PDF preview failed", error);
   } finally {
     if (page && typeof page.cleanup === "function") page.cleanup();
     if (loadingTask && typeof loadingTask.destroy === "function") {

@@ -31,7 +31,7 @@ function handleWorkerMessage({ data }) {
     return;
   }
   if (!Array.isArray(data.result)) {
-    task.reject(new Error("PDF 处理线程返回了无效结果，请重试。"));
+    task.reject(new Error("The PDF worker returned an invalid result. Try again."));
     return;
   }
   task.resolve(data.result);
@@ -40,7 +40,7 @@ function handleWorkerMessage({ data }) {
 function createPdfWorker() {
   if (pdfWorker) return pdfWorker;
   if (typeof Worker !== "function") {
-    throw new Error("当前浏览器不支持 PDF 本地处理线程，请升级浏览器后重试。");
+    throw new Error("This browser does not support local PDF workers. Update your browser and try again.");
   }
 
   try {
@@ -52,19 +52,19 @@ function createPdfWorker() {
     candidate.addEventListener("message", handleWorkerMessage);
     candidate.addEventListener("error", (event) => {
       if (typeof event.preventDefault === "function") event.preventDefault();
-      const detail = event.message ? "：" + event.message : "";
+      const detail = event.message ? ": " + event.message : "";
       stopWorker(
-        new Error("PDF 处理线程加载失败" + detail + "，请刷新后重试。"),
+        new Error("The PDF worker failed to load" + detail + ". Refresh and try again."),
       );
     });
     candidate.addEventListener("messageerror", () => {
-      stopWorker(new Error("浏览器无法读取 PDF 处理结果，请刷新后重试。"));
+      stopWorker(new Error("The browser could not read the PDF result. Refresh and try again."));
     });
     return candidate;
   } catch (error) {
     pdfWorker = undefined;
-    const detail = error instanceof Error ? error.message : "未知错误";
-    throw new Error("PDF 处理线程无法启动：" + detail);
+    const detail = error instanceof Error ? error.message : "Unknown error";
+    throw new Error("The PDF worker could not start: " + detail);
   }
 }
 
@@ -81,7 +81,7 @@ export function runPdfTask(action, payload) {
 
     const timeoutId = setTimeout(() => {
       pendingTasks.delete(id);
-      reject(new Error("PDF 处理超时，请减小文件大小或刷新后重试。"));
+      reject(new Error("PDF processing timed out. Use a smaller file or refresh and try again."));
     }, 120000);
     pendingTasks.set(id, { resolve, reject, timeoutId });
 
@@ -90,8 +90,8 @@ export function runPdfTask(action, payload) {
     } catch (error) {
       clearTimeout(timeoutId);
       pendingTasks.delete(id);
-      const detail = error instanceof Error ? error.message : "未知错误";
-      reject(new Error("无法向 PDF 处理线程发送文件：" + detail));
+      const detail = error instanceof Error ? error.message : "Unknown error";
+      reject(new Error("The file could not be sent to the PDF worker: " + detail));
     }
   });
 }
@@ -101,7 +101,7 @@ export async function serializeFiles(files) {
   return Promise.all(
     fileList.map(async (file) => {
       if (!file || typeof file.arrayBuffer !== "function") {
-        throw new Error("无法读取所选 PDF 文件，请重新选择文件。");
+        throw new Error("The selected PDF could not be read. Select the file again.");
       }
       return {
         name: typeof file.name === "string" ? file.name : "document.pdf",
