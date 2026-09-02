@@ -361,9 +361,9 @@ select:focus-visible {
 .workspace-heading .hero-promise {
   margin-top: 14px;
   max-width: 680px;
-  color: var(--green-dark);
+  color: #666666;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.45;
 }
 
