@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { renderFirstPage } from "./lib/pdfPreview.js";
+import {
+  locateTextMatches,
+  renderFirstPage,
+} from "./lib/pdfPreview.js";
 import { runPdfTask, serializeFiles } from "./lib/pdfWorkerClient.js";
 
 const tools = [
@@ -31,6 +34,13 @@ const tools = [
     shortTitle: "水印",
     description: "添加本地文字水印",
     icon: "watermark",
+  },
+  {
+    id: "removeWatermark",
+    title: "Remove Watermark",
+    shortTitle: "去水印",
+    description: "匹配文字或遮盖固定区域",
+    icon: "eraser",
   },
 ];
 
@@ -76,6 +86,14 @@ function Icon({ name, size = 22 }) {
       <svg {...common}>
         <path d="M5 4h14v16H5z" />
         <path d="m8 15 3-7 2 5 1.5-3L17 15" />
+      </svg>
+    );
+  }
+  if (name === "eraser") {
+    return (
+      <svg {...common}>
+        <path d="m4 15 8.5-8.5a2.1 2.1 0 0 1 3 0l2 2a2.1 2.1 0 0 1 0 3L10 19H6l-2-2a1.4 1.4 0 0 1 0-2Z" />
+        <path d="m10 19 4-4M9 10l5 5M14 19h6" />
       </svg>
     );
   }
@@ -398,6 +416,145 @@ function ToolOptions({ tool, options, setOptions }) {
     );
   }
 
+  if (tool === "removeWatermark") {
+    return (
+      <div className="options-grid remove-options">
+        <div className="remove-mode span-all">
+          <span>清理方式</span>
+          <div className="mode-toggle" role="group" aria-label="去水印方式">
+            <button
+              type="button"
+              className={options.removalMode === "text" ? "active" : ""}
+              onClick={() =>
+                setOptions((current) => ({
+                  ...current,
+                  removalMode: "text",
+                }))
+              }
+            >
+              文本匹配
+            </button>
+            <button
+              type="button"
+              className={options.removalMode === "rectangle" ? "active" : ""}
+              onClick={() =>
+                setOptions((current) => ({
+                  ...current,
+                  removalMode: "rectangle",
+                }))
+              }
+            >
+              矩形遮盖
+            </button>
+          </div>
+          <small>
+            文本模式由 PDF.js 定位可提取文字；扫描件或路径水印请使用矩形遮盖。
+          </small>
+        </div>
+
+        <Field label="页面范围" hint="留空表示全部页面。">
+          <input
+            value={options.ranges}
+            onChange={update("ranges")}
+            placeholder="例如：1-5, 8"
+          />
+        </Field>
+
+        {options.removalMode === "text" ? (
+          <>
+            <Field
+              label="水印关键字"
+              hint="忽略大小写与空白，并支持被拆成多个文本片段的关键字。"
+            >
+              <input
+                value={options.removeKeyword}
+                onChange={update("removeKeyword")}
+                placeholder="例如：CONFIDENTIAL"
+              />
+            </Field>
+            <Field label={"匹配留白 · " + options.matchPadding + " pt"}>
+              <input
+                type="range"
+                min="0"
+                max="12"
+                step="1"
+                value={options.matchPadding}
+                onChange={update("matchPadding")}
+              />
+            </Field>
+          </>
+        ) : (
+          <>
+            <Field label="遮盖区域">
+              <select
+                value={options.maskPreset}
+                onChange={update("maskPreset")}
+              >
+                <option value="header">顶部页眉</option>
+                <option value="footer">底部页脚</option>
+                <option value="custom">自定义矩形</option>
+              </select>
+            </Field>
+            {options.maskPreset !== "custom" ? (
+              <Field
+                label={
+                  (options.maskPreset === "header" ? "顶部" : "底部") +
+                  "遮盖高度 · pt"
+                }
+                hint="PDF 常用页面宽约 595 pt、高约 842 pt。"
+              >
+                <input
+                  type="number"
+                  min="1"
+                  value={options.maskMargin}
+                  onChange={update("maskMargin")}
+                />
+              </Field>
+            ) : (
+              <div className="rectangle-grid span-all">
+                <Field label="X 坐标">
+                  <input
+                    type="number"
+                    min="0"
+                    value={options.rectX}
+                    onChange={update("rectX")}
+                  />
+                </Field>
+                <Field label="Y 坐标">
+                  <input
+                    type="number"
+                    min="0"
+                    value={options.rectY}
+                    onChange={update("rectY")}
+                  />
+                </Field>
+                <Field label="宽度">
+                  <input
+                    type="number"
+                    min="1"
+                    value={options.rectWidth}
+                    onChange={update("rectWidth")}
+                  />
+                </Field>
+                <Field label="高度">
+                  <input
+                    type="number"
+                    min="1"
+                    value={options.rectHeight}
+                    onChange={update("rectHeight")}
+                  />
+                </Field>
+                <small className="coordinate-hint">
+                  单位为 PDF point，原点位于页面左下角。
+                </small>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
   return null;
 }
 
@@ -450,6 +607,15 @@ const defaultOptions = {
   opacity: "0.2",
   color: "#1f4138",
   placement: "center",
+  removalMode: "text",
+  removeKeyword: "CONFIDENTIAL",
+  matchPadding: "3",
+  maskPreset: "header",
+  maskMargin: "72",
+  rectX: "0",
+  rectY: "0",
+  rectWidth: "595",
+  rectHeight: "72",
 };
 
 function Workspace({ tool }) {
@@ -481,24 +647,42 @@ function Workspace({ tool }) {
     });
   };
 
-  const canProcess = multiple ? files.length >= 2 : files.length === 1;
+  const hasRequiredKeyword =
+    tool !== "removeWatermark" ||
+    options.removalMode !== "text" ||
+    options.removeKeyword.trim().length > 0;
+  const canProcess =
+    (multiple ? files.length >= 2 : files.length === 1) &&
+    hasRequiredKeyword;
 
   const processFiles = async () => {
     setProcessing(true);
     setError("");
     clearResults();
     try {
+      const matches =
+        tool === "removeWatermark" && options.removalMode === "text"
+          ? await locateTextMatches(
+              files[0],
+              options.removeKeyword,
+              options.ranges,
+            )
+          : [];
       const serialized = await serializeFiles(files);
+      const operationOptions =
+        tool === "rotate"
+          ? { angle: options.rotationAngle }
+          : tool === "watermark"
+            ? { angle: options.watermarkAngle }
+            : {};
       const payload =
         tool === "merge"
           ? { files: serialized }
           : {
               file: serialized[0],
               ...options,
-              angle:
-                tool === "rotate"
-                  ? options.rotationAngle
-                  : options.watermarkAngle,
+              ...operationOptions,
+              matches,
             };
       const outputFiles = await runPdfTask(tool, payload);
       setResults(

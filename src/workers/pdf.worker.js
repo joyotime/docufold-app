@@ -217,11 +217,141 @@ async function watermarkPdf({
   ];
 }
 
+function finiteNumber(value, label) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    throw new Error(label + " 必须是有效数字。");
+  }
+  return number;
+}
+
+function drawTextMatchMasks(document, pageIndices, matches, padding) {
+  const selectedPages = new Set(pageIndices);
+  let maskCount = 0;
+
+  for (const match of matches) {
+    if (!selectedPages.has(match.pageIndex)) continue;
+    const page = document.getPage(match.pageIndex);
+    for (const rectangle of match.rectangles) {
+      page.drawRectangle({
+        x: finiteNumber(rectangle.x, "匹配区域 X") - padding,
+        y: finiteNumber(rectangle.y, "匹配区域 Y") - padding,
+        width: Math.max(
+          1,
+          finiteNumber(rectangle.width, "匹配区域宽度") + padding * 2,
+        ),
+        height: Math.max(
+          1,
+          finiteNumber(rectangle.height, "匹配区域高度") + padding * 2,
+        ),
+        rotate: degrees(finiteNumber(rectangle.angle, "匹配区域角度")),
+        color: rgb(1, 1, 1),
+        opacity: 1,
+      });
+      maskCount += 1;
+    }
+  }
+
+  if (maskCount === 0) {
+    throw new Error("在指定页面中没有找到匹配的水印文字。");
+  }
+  return maskCount;
+}
+
+function maskRectangleForPage(page, options) {
+  const { width: pageWidth, height: pageHeight } = page.getSize();
+  if (options.maskPreset === "header") {
+    const height = Math.min(
+      pageHeight,
+      Math.max(1, finiteNumber(options.maskMargin, "顶部边距")),
+    );
+    return { x: 0, y: pageHeight - height, width: pageWidth, height };
+  }
+  if (options.maskPreset === "footer") {
+    const height = Math.min(
+      pageHeight,
+      Math.max(1, finiteNumber(options.maskMargin, "底部边距")),
+    );
+    return { x: 0, y: 0, width: pageWidth, height };
+  }
+
+  const x = finiteNumber(options.rectX, "矩形 X");
+  const y = finiteNumber(options.rectY, "矩形 Y");
+  const width = finiteNumber(options.rectWidth, "矩形宽度");
+  const height = finiteNumber(options.rectHeight, "矩形高度");
+  if (x < 0 || y < 0 || width <= 0 || height <= 0) {
+    throw new Error("自定义矩形需要非负坐标以及大于 0 的宽度和高度。");
+  }
+  if (x >= pageWidth || y >= pageHeight) {
+    throw new Error("自定义矩形起点超出页面范围。");
+  }
+  return {
+    x,
+    y,
+    width: Math.min(width, pageWidth - x),
+    height: Math.min(height, pageHeight - y),
+  };
+}
+
+function drawRectangleMasks(document, pageIndices, options) {
+  for (const pageIndex of pageIndices) {
+    const page = document.getPage(pageIndex);
+    page.drawRectangle({
+      ...maskRectangleForPage(page, options),
+      color: rgb(1, 1, 1),
+      opacity: 1,
+    });
+  }
+  return pageIndices.length;
+}
+
+async function removeWatermarkPdf({
+  file,
+  ranges,
+  removalMode,
+  matches = [],
+  matchPadding,
+  maskPreset,
+  maskMargin,
+  rectX,
+  rectY,
+  rectWidth,
+  rectHeight,
+}) {
+  const document = await PDFDocument.load(file.data);
+  const pageIndices = uniquePages(
+    parseRangeGroups(ranges, document.getPageCount(), false),
+  );
+  const options = {
+    maskPreset,
+    maskMargin,
+    rectX,
+    rectY,
+    rectWidth,
+    rectHeight,
+  };
+
+  if (removalMode === "text") {
+    const padding = Math.max(0, finiteNumber(matchPadding, "匹配留白"));
+    drawTextMatchMasks(document, pageIndices, matches, padding);
+  } else {
+    drawRectangleMasks(document, pageIndices, options);
+  }
+
+  return [
+    output(
+      `${withoutExtension(file.name)}-watermark-removed.pdf`,
+      await document.save(),
+    ),
+  ];
+}
+
 const handlers = {
   merge: mergePdfs,
   split: splitPdf,
   rotate: rotatePdf,
   watermark: watermarkPdf,
+  removeWatermark: removeWatermarkPdf,
 };
 
 self.addEventListener("message", async ({ data }) => {
