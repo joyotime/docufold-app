@@ -73,11 +73,22 @@ export async function locateTextMatches(file, keyword, pageRanges) {
       const page = await document.getPage(pageIndex + 1);
       try {
         const textContent = await page.getTextContent();
-        const rawItems = Array.from(textContent?.items || []);
-        const items = rawItems.filter(
-          (item) =>
-            item && typeof item.str === "string" && item.str.length > 0,
+        const rawItems = Array.from(
+          (textContent && textContent.items) || [],
         );
+        const items = [];
+        for (let itemIndex = 0; itemIndex < rawItems.length; itemIndex += 1) {
+          const item = rawItems[itemIndex];
+          if (
+            item &&
+            typeof item.str === "string" &&
+            item.str.length > 0 &&
+            item.transform &&
+            item.transform.length >= 6
+          ) {
+            items.push(item);
+          }
+        }
         const matchedIndices = matchingItemIndices(items, keyword);
         if (matchedIndices.length > 0) {
           matches.push({

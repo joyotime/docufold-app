@@ -53,7 +53,9 @@ export function matchingItemIndices(items, keyword) {
   const owners = [];
 
   Array.from(items || []).forEach((item, itemIndex) => {
-    const characters = Array.from(normalizeSearchText(item?.str));
+    const itemText =
+      item && typeof item.str === "string" ? item.str : "";
+    const characters = Array.from(normalizeSearchText(itemText));
     for (
       let characterIndex = 0;
       characterIndex < characters.length;
@@ -83,17 +85,27 @@ export function matchingItemIndices(items, keyword) {
 }
 
 export function rectangleForTextItem(item) {
-  const transform = Array.from(item?.transform || []);
-  if (transform.length < 6) {
+  if (
+    !item ||
+    !item.transform ||
+    typeof item.transform.length !== "number" ||
+    item.transform.length < 6
+  ) {
     throw new Error("PDF 文本定位信息无效，无法生成擦除区域。");
+  }
+  const transform = Array.from(item.transform);
+  const x = Number(transform[4]);
+  const y = Number(transform[5]);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    throw new Error("PDF 文本坐标无效，无法生成擦除区域。");
   }
   const fontHeight =
     Math.hypot(Number(transform[2]), Number(transform[3])) ||
     Number(item.height) ||
     10;
   return {
-    x: Number(transform[4]),
-    y: Number(transform[5]) - fontHeight * 0.24,
+    x,
+    y: y - fontHeight * 0.24,
     width: Math.max(Number(item.width) || 0, 2),
     height: Math.max(fontHeight * 1.2, 2),
     angle: (Math.atan2(transform[1], transform[0]) * 180) / Math.PI,
