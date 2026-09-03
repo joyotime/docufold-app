@@ -39,6 +39,11 @@ export default function LicenseModal({
     );
   }, [isActivated, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen || typeof window.createLemonSqueezy !== "function") return;
+    window.createLemonSqueezy();
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const activate = async (event) => {
@@ -125,7 +130,10 @@ export default function LicenseModal({
 
         <div className="purchase-row">
           <span>Need a license?</span>
-          <a href={PRO_CHECKOUT_URL} target="_blank" rel="noreferrer">
+          <a
+            className="lemonsqueezy-button"
+            href={PRO_CHECKOUT_URL}
+          >
             Upgrade to Pro
           </a>
         </div>

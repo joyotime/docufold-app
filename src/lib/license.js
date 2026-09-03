@@ -1,6 +1,6 @@
 export const PRO_ACTIVATION_STORAGE_KEY = "is_pro_activated";
 export const PRO_CHECKOUT_URL =
-  "https://yourdomain.lemonsqueezy.com/checkout";
+  "https://your-store.lemonsqueezy.com/buy/your-checkout-id?embed=1";
 
 const LICENSE_ACTIVATION_URL =
   "https://api.lemonsqueezy.com/v1/licenses/activate";
