@@ -59,7 +59,7 @@ select:focus-visible {
 .topbar {
   height: 72px;
   display: grid;
-  grid-template-columns: 260px 1fr 330px;
+  grid-template-columns: 260px minmax(0, 1fr);
   align-items: center;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 254, 249, 0.94);
@@ -117,6 +117,8 @@ select:focus-visible {
 }
 
 .topbar nav {
+  grid-column: 2;
+  grid-row: 1;
   display: none;
   justify-content: center;
   gap: 4px;
@@ -148,10 +150,13 @@ select:focus-visible {
 }
 
 .topbar-actions {
-  justify-self: end;
-  margin-right: 27px;
+  grid-column: 2;
+  grid-row: 1;
+  width: min(920px, calc(100% - 64px));
+  justify-self: center;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 15px;
 }
 
@@ -1087,7 +1092,7 @@ footer {
 
 @media (max-width: 900px) {
   .topbar {
-    grid-template-columns: 210px 1fr auto;
+    grid-template-columns: 210px minmax(0, 1fr);
   }
 
   .local-badge {
@@ -1129,7 +1134,11 @@ footer {
   }
 
   .topbar-actions {
-    margin-right: 0;
+    grid-column: 2;
+    grid-row: 1;
+    width: auto;
+    justify-self: end;
+    justify-content: flex-end;
   }
 
   .pro-cta {
