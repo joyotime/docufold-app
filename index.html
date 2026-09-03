@@ -9,10 +9,31 @@
     />
     <meta name="theme-color" content="#f6f4ed" />
     <title>DocuFold · Private PDF Tools</title>
-    <script type="module" crossorigin src="/assets/index-Dr3TZzMv.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DPGxQW8-.css">
+
+    <!-- Lemon Squeezy 支付 Overlay SDK -->
+    <script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- 注意：这里指向 Vite 的源码入口文件，Vite 打包时会自动将它转化为 assets/xxx.js -->
+    <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Lemon Squeezy 前端事件监听逻辑 -->
+    <script>
+      window.createLemonSqueezy = window.createLemonSqueezy || function() { (window.createLemonSqueezy.q = window.createLemonSqueezy.q || []).push(arguments) };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        window.createLemonSqueezy({
+          eventHandler: (event) => {
+            console.log('Lemon Squeezy Event:', event.event, event);
+
+            if (event.event === 'Checkout.Success') {
+              alert('恭喜，支付成功！已解锁 DocuFold Pro 权限。');
+            }
+          }
+        });
+      });
+    </script>
   </body>
 </html>
