@@ -50,15 +50,18 @@ No Java service, database, or server-side environment variables are required.
 ## Pro license activation
 
 The **Activate Pro** dialog sends the entered key directly to Lemon Squeezy's
-License API from the browser. The key is not persisted. A successful activation
-stores only this browser flag:
+License API from the browser. A successful activation stores the Pro flag,
+license key, and returned instance ID in this browser so the same device can be
+deactivated later:
 
 ```text
-is_pro_activated=true
+docufold_is_pro=true
+docufold_license_key=...
+docufold_instance_id=...
 ```
 
-Before launch, replace the placeholder checkout URL in
-`src/lib/license.js` with the production Lemon Squeezy checkout URL.
+Activated users can open the license dialog and select **Deactivate License**
+to release this browser's activation slot.
 
 This local browser flag is appropriate for a lightweight client-only product
 preview, but it is not tamper-proof entitlement enforcement. A production app

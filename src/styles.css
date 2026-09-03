@@ -1067,6 +1067,43 @@ footer {
   background: #eaf4ed;
   color: #27634c;
 }
+
+.active-license-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 15px;
+  border: 1px solid #e4d4cc;
+  border-radius: 9px;
+  padding: 14px;
+  background: #fffaf7;
+}
+
+.active-license-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.deactivate-license-button {
+  height: 42px;
+  border: 1px solid #c9663a;
+  border-radius: 8px;
+  background: white;
+  color: #a94d28;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.deactivate-license-button:hover:not(:disabled) {
+  background: #fff0e8;
+}
+
+.deactivate-license-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 .purchase-row {
   display: flex;
   justify-content: space-between;

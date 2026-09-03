@@ -969,6 +969,7 @@ function App() {
         isOpen={licenseModalOpen}
         isActivated={isProActivated}
         onActivated={() => setIsProActivated(true)}
+        onDeactivated={() => setIsProActivated(false)}
         onClose={() => setLicenseModalOpen(false)}
       />
     </div>
