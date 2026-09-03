@@ -9,45 +9,10 @@
     />
     <meta name="theme-color" content="#f6f4ed" />
     <title>DocuFold · Private PDF Tools</title>
-
-    <!-- 原项目的打包资源 -->
     <script type="module" crossorigin src="/assets/index-Dr3TZzMv.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-DPGxQW8-.css">
-
-    <!-- Lemon Squeezy 支付 Overlay SDK -->
-    <script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
   </head>
   <body>
-    <!-- 1. 原应用渲染节点 -->
     <div id="root"></div>
-
-    <!-- 2. 直接置顶/悬浮在页面右上方的前端升级按钮 -->
-    <!-- 注意：请把下面的 YOUR_CHECKOUT_URL 替换为你在 Lemon Squeezy 的实际购买链接 -->
-    <div style="position: fixed; top: 16px; right: 20px; z-index: 9999;">
-      <a 
-        href="https://docufold.lemonsqueezy.com/checkout/buy/6e97edf7-08a7-4496-8656-bcc6dec2f699" 
-        class="lemonsqueezy-button"
-        style="background-color: #f59e0b; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"
-      >
-        升级到 Pro
-      </a>
-    </div>
-
-    <!-- 3. Lemon Squeezy 前端事件监听逻辑 -->
-    <script>
-      window.createLemonSqueezy = window.createLemonSqueezy || function() { (window.createLemonSqueezy.q = window.createLemonSqueezy.q || []).push(arguments) };
-
-      document.addEventListener('DOMContentLoaded', () => {
-        window.createLemonSqueezy({
-          eventHandler: (event) => {
-            console.log('Lemon Squeezy Event:', event.event, event);
-
-            if (event.event === 'Checkout.Success') {
-              alert('恭喜，支付成功！已解锁 DocuFold Pro 权限。');
-            }
-          }
-        });
-      });
-    </script>
   </body>
 </html>
