@@ -156,7 +156,7 @@ select:focus-visible {
   justify-self: center;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-end;
   gap: 15px;
 }
 
